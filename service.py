@@ -52,6 +52,7 @@ class Service:
         self.clf = clf
         self.express = express in (True, "True", "true", "1")
         self.webhook_config = webhook_config
+        log.debug(webhook_config)
         try:
             self.hardware_finish_color = HardwareFinishColor[finish.upper()]
         except KeyError:
