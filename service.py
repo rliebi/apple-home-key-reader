@@ -3,7 +3,8 @@ import logging
 import time
 import os
 from operator import attrgetter
-
+from requests.auth import HTTPBasicAuth
+import requests
 from entity import (
     Issuer,
     Operation,
