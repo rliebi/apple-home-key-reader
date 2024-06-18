@@ -20,5 +20,15 @@
         "express": true,
         "finish": "silver",
         "flow": "fast"
+    },
+    "webhook": {
+        "url": "http://example.invalid/webhook",
+        "method": "GET",
+        "auth": {
+            "type": "Bearer",
+            "token": "your_api_token_here",
+            "basic_username": "your_username",
+            "basic_password": "your_password"
+        }
     }
 }

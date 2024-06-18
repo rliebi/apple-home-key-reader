@@ -45,12 +45,13 @@ class Service:
         repository: Repository,
         express: bool = True,
         finish: str = "silver",
-        flow: str = "fast",
+        flow: str = "fast", 
+        webhook_config=None,
     ) -> None:
         self.repository = repository
         self.clf = clf
         self.express = express in (True, "True", "true", "1")
-
+        self.webhook_config = webhook_config
         try:
             self.hardware_finish_color = HardwareFinishColor[finish.upper()]
         except KeyError:
@@ -72,6 +73,36 @@ class Service:
     def on_endpoint_authenticated(self, endpoint):
         """This method will be called when an endpoint is authenticated"""
         # Currently overwritten by accessory.py
+
+
+    def trigger_webhook(self):
+        if not self.webhook_config:
+            return
+
+        url = self.webhook_config["url"]
+        method = self.webhook_config.get("method", "POST")
+        auth_config = self.webhook_config.get("auth", {})
+
+        headers = {}
+        auth = None
+        if auth_config.get("type") == "Bearer":
+            headers["Authorization"] = f"Bearer {auth_config['token']}"
+        elif auth_config.get("type") == "Basic":
+            auth = HTTPBasicAuth(auth_config["basic_username"], auth_config["basic_password"])
+
+        data = {
+            "lock_state": self.nfc_device.lock_state,
+        }
+
+        try:
+            if method == "POST":
+                response = requests.post(url, json=data, headers=headers, auth=auth)
+            else:
+                response = requests.get(url, params=data, headers=headers, auth=auth)
+
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"Webhook trigger failed: {e}")
 
     def start(self):
         self._runner = create_runner(

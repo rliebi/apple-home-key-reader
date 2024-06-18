@@ -32,6 +32,8 @@ class Lock(Accessory):
         self.lock_target_state.set_value(self._lock_target_state, should_notify=True)
         self._lock_current_state = self._lock_target_state
         self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
+        if self.service:
+            self.service.trigger_webhook()
 
     def add_preload_service(self, service, chars=None, unique_id=None):
         """Create a service with the given name and add it to this acc."""
