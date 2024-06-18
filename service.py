@@ -77,6 +77,7 @@ class Service:
 
     def trigger_webhook(self):
         if not self.webhook_config:
+            log.warning(f"Webhook not configured")
             return
 
         url = self.webhook_config["url"]
@@ -103,6 +104,9 @@ class Service:
             response.raise_for_status()
         except requests.RequestException as e:
             print(f"Webhook trigger failed: {e}")
+            log.warning(
+               f"Webhook trigger failed: {e}"
+            )
 
     def start(self):
         self._runner = create_runner(
