@@ -77,7 +77,7 @@ class Service:
         # Currently overwritten by accessory.py
 
 
-    def trigger_webhook(self):
+    def trigger_webhook(self, data={}):
         if not self.webhook_config:
             log.warning(f"Webhook not configured")
             return
@@ -92,10 +92,6 @@ class Service:
             headers["Authorization"] = f"Bearer {auth_config['token']}"
         elif auth_config.get("type") == "Basic":
             auth = HTTPBasicAuth(auth_config["basic_username"], auth_config["basic_password"])
-
-        data = {
-            "lock_state": self.nfc_device.lock_state,
-        }
 
         try:
             if method == "POST":
