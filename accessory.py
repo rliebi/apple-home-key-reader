@@ -17,7 +17,7 @@ class Lock(Accessory):
         self._last_client_public_keys = None
 
         self._lock_target_state = lock_state_at_startup
-        self._lock_current_state = service.door_is_closed()
+        self._lock_current_state = service.is_door_closed()
 
         self.service = service
         self.service.on_endpoint_authenticated = self.on_endpoint_authenticated
