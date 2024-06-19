@@ -50,14 +50,15 @@ def configure_nfc_device(config: dict):
     return clf
 
 
-def configure_homekey_service(config: dict, nfc_device, repository=None, webhook_config=None):
+def configure_homekey_service(config: dict, nfc_device, repository=None, webhook_config=None, door_status_config=None):
     service = Service(
         nfc_device,
         repository=repository or Repository(config["persist"]),
         express=config.get("express", True),
         finish=config.get("finish"),
         flow=config.get("flow"),
-        webhook_config=webhook_config
+        webhook_config=webhook_config,
+        door_status_config=door_status_config
     )
     return service
 
@@ -67,7 +68,7 @@ def main():
     log = configure_logging(config["logging"])
 
     nfc_device = configure_nfc_device(config["nfc"])
-    homekey_service = configure_homekey_service(config["homekey"], nfc_device, webhook_config=config["webhook"])
+    homekey_service = configure_homekey_service(config["homekey"], nfc_device, webhook_config=config["webhook"], door_status_config=config["door_status"])
     hap_driver, _ = configure_hap_accessory(config["hap"], homekey_service)
 
     for s in (signal.SIGINT, signal.SIGTERM):
