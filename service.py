@@ -85,9 +85,17 @@ class Service:
         url = self.door_status_config["url"]
         json_path = self.door_status_config.get("path", [])
         closed_value = self.door_status_config.get("closed_value", 1)
+        auth_config = self.door_status_config.get("auth", {})
+
+        headers = {}
+        auth = None
+        if auth_config.get("type") == "Bearer":
+            headers["Authorization"] = f"Bearer {auth_config['token']}"
+        elif auth_config.get("type") == "Basic":
+            auth = HTTPBasicAuth(auth_config["basic_username"], auth_config["basic_password"])
 
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=headers, auth=auth)
             response.raise_for_status()
             status = response.json()
             log.info(f"Fetched door status: {status}")

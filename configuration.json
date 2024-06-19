@@ -34,6 +34,12 @@
     "door_status": {
         "url": "http://example.invalid/status",
         "path": ["inputs", "input"],
-        "closed_value": 1
+        "closed_value": 1,
+        "auth": {
+            "type": "Basic",
+            "token": "your_api_token_here",
+            "basic_username": "your_username",
+            "basic_password": "your_password"
+        }
     }
 }
