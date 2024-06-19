@@ -102,7 +102,7 @@ class Service:
 
             # Traverse the JSON path to get the door status
             for key in json_path:
-                status = status.get(key)
+                status = status[key]
                 if status is None:
                     log.error(f"Invalid path in door status JSON: {json_path}")
                     return None
