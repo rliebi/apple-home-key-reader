@@ -115,6 +115,9 @@ class Lock(Accessory):
 
     def get_lock_current_state(self):
         log.info("get_lock_current_state")
+        remote_status = self.service.is_door_closed()
+        if self.service.is_door_closed() != None:
+            return self.service.is_door_closed()
         return self._lock_current_state
 
     def get_lock_target_state(self):

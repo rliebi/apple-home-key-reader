@@ -48,12 +48,13 @@ class Service:
         finish: str = "silver",
         flow: str = "fast", 
         webhook_config=None,
+        door_status_config=None,
     ) -> None:
         self.repository = repository
         self.clf = clf
         self.express = express in (True, "True", "true", "1")
         self.webhook_config = webhook_config
-        log.debug(webhook_config)
+        self.door_status_config = door_status_config
         try:
             self.hardware_finish_color = HardwareFinishColor[finish.upper()]
         except KeyError:
@@ -75,7 +76,38 @@ class Service:
     def on_endpoint_authenticated(self, endpoint):
         """This method will be called when an endpoint is authenticated"""
         # Currently overwritten by accessory.py
+    
+    def fetch_door_status(self):
+        if not self.door_status_config:
+            log.warning("Door status URL not configured")
+            return None
 
+        url = self.door_status_config["url"]
+        json_path = self.door_status_config.get("path", [])
+        closed_value = self.door_status_config.get("closed_value", 1)
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            status = response.json()
+            log.info(f"Fetched door status: {status}")
+
+            # Traverse the JSON path to get the door status
+            for key in json_path:
+                status = status.get(key)
+                if status is None:
+                    log.error(f"Invalid path in door status JSON: {json_path}")
+                    return None
+
+            log.info(f"Door status at path {json_path}: {status}")
+            return status == closed_value
+        except requests.RequestException as e:
+            log.error(f"Failed to fetch door status: {e}")
+            return None
+
+    def is_door_closed(self):
+        door_status = self.fetch_door_status()
+        return door_status
 
     def trigger_webhook(self, data={}):
         if not self.webhook_config:

@@ -30,5 +30,10 @@
             "basic_username": "your_username",
             "basic_password": "your_password"
         }
+    },
+    "door_status": {
+        "url": "http://example.invalid/status",
+        "path": ["inputs", "input"],
+        "closed_value": 1
     }
 }
