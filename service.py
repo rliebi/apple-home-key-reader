@@ -102,9 +102,20 @@ class Service:
 
             # Traverse the JSON path to get the door status
             for key in json_path:
-                status = status[key]
-                if status is None:
-                    log.error(f"Invalid path in door status JSON: {json_path}")
+                if isinstance(status, list):
+                    try:
+                        key = int(key)
+                        status = status[key]
+                    except (ValueError, IndexError) as e:
+                        log.error(f"Error accessing list at path {json_path} with key {key}: {e}")
+                        return None
+                elif isinstance(status, dict):
+                    status = status.get(key)
+                    if status is None:
+                        log.error(f"Invalid path in door status JSON: {json_path}")
+                        return None
+                else:
+                    log.error(f"Unexpected data type at path {json_path} with key {key}")
                     return None
 
             log.info(f"Door status at path {json_path}: {status}")
