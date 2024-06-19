@@ -29,9 +29,9 @@ class Lock(Accessory):
         log.info(
             f"Toggling lock state due to endpoint authentication event {self._lock_target_state} -> {self._lock_current_state} {endpoint}"
         )
-        self.lock_target_state.set_value(self._lock_target_state, should_notify=False)
+        self.lock_target_state.set_value(self._lock_target_state, should_notify=True)
         self._lock_current_state = self._lock_target_state
-        self.lock_current_state.set_value(self._lock_current_state, should_notify=False)
+        self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
         if self.service:
             self.service.trigger_webhook()
 
@@ -125,8 +125,9 @@ class Lock(Accessory):
         return self._lock_target_state
 
     def set_lock_target_state(self, value):
-        log.info(f"set_lock_target_state {self.service.is_door_closed()}")
-        self._lock_target_state = self._lock_current_state = self.service.is_door_closed()
+        value = 1 if (self.service.is_door_closed()) else 0
+        log.info(f"set_lock_target_state {value}")
+        self._lock_target_state = self._lock_current_state = value
         self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
         return self._lock_target_state
 
