@@ -17,7 +17,7 @@ class Lock(Accessory):
         self._last_client_public_keys = None
 
         self._lock_target_state = lock_state_at_startup
-        self._lock_current_state = lock_state_at_startup
+        self._lock_current_state = service.door_is_closed()
 
         self.service = service
         self.service.on_endpoint_authenticated = self.on_endpoint_authenticated
@@ -25,13 +25,13 @@ class Lock(Accessory):
         self.add_nfc_access_service()
 
     def on_endpoint_authenticated(self, endpoint):
-        self._lock_target_state = 0 if self._lock_current_state else 1
+        self._lock_target_state = 0
         log.info(
             f"Toggling lock state due to endpoint authentication event {self._lock_target_state} -> {self._lock_current_state} {endpoint}"
         )
-        self.lock_target_state.set_value(self._lock_target_state, should_notify=True)
+        self.lock_target_state.set_value(self._lock_target_state, should_notify=False)
         self._lock_current_state = self._lock_target_state
-        self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
+        self.lock_current_state.set_value(self._lock_current_state, should_notify=False)
         if self.service:
             self.service.trigger_webhook()
 
@@ -125,8 +125,8 @@ class Lock(Accessory):
         return self._lock_target_state
 
     def set_lock_target_state(self, value):
-        log.info(f"set_lock_target_state {value}")
-        self._lock_target_state = self._lock_current_state = value
+        log.info(f"set_lock_target_state {self.service.is_door_closed()}")
+        self._lock_target_state = self._lock_current_state = self.service.is_door_closed()
         self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
         return self._lock_target_state
 
