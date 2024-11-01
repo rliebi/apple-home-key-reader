@@ -30,4 +30,4 @@ hap.state
 
 # Tox
 .tox
-
+*.local.*

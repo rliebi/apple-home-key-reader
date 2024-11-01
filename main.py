@@ -2,6 +2,7 @@ import json
 import logging
 import signal
 import sys
+import argparse
 
 from pyhap.accessory_driver import AccessoryDriver
 
@@ -64,7 +65,16 @@ def configure_homekey_service(config: dict, nfc_device, repository=None, webhook
 
 
 def main():
-    config = load_configuration()
+    parser = argparse.ArgumentParser(description="Apple Home Key Reader")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=CONFIGURATION_FILE_PATH,
+        help="Path to the configuration file",
+    )
+    args = parser.parse_args()
+
+    config = load_configuration(args.config)
     log = configure_logging(config["logging"])
 
     nfc_device = configure_nfc_device(config["nfc"])
