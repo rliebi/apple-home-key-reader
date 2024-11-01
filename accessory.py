@@ -114,14 +114,14 @@ class Lock(Accessory):
         self.service.update_hap_pairings(client_public_keys)
 
     def get_lock_current_state(self):
-        log.info("get_lock_current_state")
+        log.info(f"get_lock_current_state {self._lock_current_state}")
         remote_status = self.service.is_door_closed()
         if self.service.is_door_closed() != None:
             return self.service.is_door_closed()
         return self._lock_current_state
 
     def get_lock_target_state(self):
-        log.info("get_lock_target_state")
+        log.info(f"get_lock_target_state {self._lock_target_state}")
         return self._lock_target_state
 
     def set_lock_target_state(self, value):
