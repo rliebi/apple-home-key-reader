@@ -79,7 +79,8 @@ def main():
     log = configure_logging(config["logging"])
 
     nfc_device = configure_nfc_device(config["nfc"])
-    homekey_service = configure_homekey_service(config["homekey"], nfc_device, webhook_config=config["webhook"], door_status_config=config["door_status"])
+    door_status_config = config.get("door_status")
+    homekey_service = configure_homekey_service(config["homekey"], nfc_device, webhook_config=config["webhook"], door_status_config=door_status_config)
     hap_driver, _ = configure_hap_accessory(config["hap"], homekey_service, config["mqtt"])
 
     for s in (signal.SIGINT, signal.SIGTERM):
