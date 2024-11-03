@@ -14,12 +14,32 @@
         "persist": "hap.state",
         "default": "locked"
     },
-
+    "mqtt": {
+        "username": "your_username",
+        "password": "your_password",
+        "host": "mqtt.example.invalid",
+        "port": 1883,
+        "topic": "home/door",
+        "trigger": "trigger"
+    },
     "homekey": {
         "persist": "homekey.json",
         "express": true,
         "finish": "silver",
         "flow": "fast"
+    },
+    "push_to_open": {
+        "inner_button_function": "unlock",
+        "outer_button_function": "open_if_unlocked",
+        "unlock": {
+            "duration": 5000,
+            "reset_on_unlock": true,
+            "type": "relay",
+            "relay": {
+                "pin": 17,
+                "active_low": true
+            }
+        }
     },
     "webhook": {
         "url": "http://example.invalid/webhook",

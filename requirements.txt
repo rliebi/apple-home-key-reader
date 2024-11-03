@@ -2,3 +2,4 @@ HAP-python==4.9.*
 cryptography==42.0.4
 nfcpy==1.0.*
 cbor2==5.4.*
+paho-mqtt==1.5.*

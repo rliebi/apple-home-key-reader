@@ -1,5 +1,7 @@
 import logging
 
+import threading
+import paho.mqtt.client as mqtt
 from pyhap.accessory import Accessory
 from pyhap.const import CATEGORY_DOOR_LOCK
 
@@ -12,26 +14,51 @@ log = logging.getLogger()
 class Lock(Accessory):
     category = CATEGORY_DOOR_LOCK
 
-    def __init__(self, *args, service: Service, lock_state_at_startup=1, **kwargs):
+    def __init__(self, *args, service: Service, lock_state_at_startup=1, mqtt_client:dict=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._last_client_public_keys = None
 
         self._lock_target_state = lock_state_at_startup
-        self._lock_current_state = service.is_door_closed()
+        self._lock_current_state = 1
 
         self.service = service
         self.service.on_endpoint_authenticated = self.on_endpoint_authenticated
         self.add_lock_service()
         self.add_nfc_access_service()
+        self.mqtt_settings = mqtt_client
+        self.start_mqtt_listener()
 
+    def start_mqtt_listener(self):
+        def on_connect(mqtt_client, userdata, flags, rc):
+
+            log.info(f"Connected to MQTT broker with result code {rc}")
+            mqtt_client.subscribe(self.mqtt_settings["topic"])
+
+        def on_message(mqtt_client, userdata, msg):
+            log.info(f"MQTT message received: {msg.topic} {msg.payload}")
+            if self._lock_current_state == 0:
+                return
+            # Add logic to handle the message and trigger Shelly
+            if msg.payload.decode() == "trigger" and self.service:  # Replace with actual condition
+                self.service.trigger_webhook()
+
+        client = mqtt.Client()
+        client.username_pw_set(self.mqtt_settings["username"], self.mqtt_settings["password"])
+        client.on_connect = on_connect
+        client.on_message = on_message
+
+        client.connect(self.mqtt_settings["host"], self.mqtt_settings["port"], 60)
+
+        thread = threading.Thread(target=client.loop_forever, daemon=True)
+        thread.start()
     def on_endpoint_authenticated(self, endpoint):
-        self._lock_target_state = 0
+        # self._lock_target_state = 0
         log.info(
             f"Toggling lock state due to endpoint authentication event {self._lock_target_state} -> {self._lock_current_state} {endpoint}"
         )
-        self.lock_target_state.set_value(self._lock_target_state, should_notify=True)
-        self._lock_current_state = self._lock_target_state
-        self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
+        # self.lock_target_state.set_value(self._lock_target_state, should_notify=True)
+        # self._lock_current_state = self._lock_target_state
+        # self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
         if self.service:
             self.service.trigger_webhook()
 
@@ -115,8 +142,7 @@ class Lock(Accessory):
 
     def get_lock_current_state(self):
         log.info(f"get_lock_current_state {self._lock_current_state}")
-        remote_status = self.service.is_door_closed()
-        if self.service.is_door_closed() != None:
+        if self.service.is_door_closed() is not None:
             return self.service.is_door_closed()
         return self._lock_current_state
 
@@ -125,7 +151,7 @@ class Lock(Accessory):
         return self._lock_target_state
 
     def set_lock_target_state(self, value):
-        value = 1 if (self.service.is_door_closed()) else 0
+        # value = 1 if (self.service.is_door_closed()) else 0
         log.info(f"set_lock_target_state {value}")
         self._lock_target_state = self._lock_current_state = value
         self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
@@ -133,7 +159,7 @@ class Lock(Accessory):
 
     def get_lock_version(self):
         log.info("get_lock_version")
-        return ""
+        return "1.0.0"
 
     def set_lock_control_point(self, value):
         log.info(f"set_lock_control_point: {value}")

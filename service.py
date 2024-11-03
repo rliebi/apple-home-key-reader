@@ -76,7 +76,7 @@ class Service:
     def on_endpoint_authenticated(self, endpoint):
         """This method will be called when an endpoint is authenticated"""
         # Currently overwritten by accessory.py
-    
+
     def fetch_door_status(self):
         if not self.door_status_config:
             log.warning("Door status URL not configured")
@@ -128,7 +128,9 @@ class Service:
         door_status = self.fetch_door_status()
         return door_status
 
-    def trigger_webhook(self, data={}):
+    def trigger_webhook(self, data=None):
+        if data is None:
+            data = {}
         if not self.webhook_config:
             log.warning(f"Webhook not configured")
             return
@@ -253,6 +255,8 @@ class Service:
         log.info("Waiting for next device...")
 
     def run(self):
+        if (self.clf is None) or (self.repository is None):
+            return
         if self.repository.get_reader_private_key() in (None, b""):
             raise Exception("Device is not configured via HAP. NFC inactive")
 

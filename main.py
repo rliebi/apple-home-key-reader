@@ -31,12 +31,13 @@ def configure_logging(config: dict):
     return log
 
 
-def configure_hap_accessory(config: dict, homekey_service=None):
+def configure_hap_accessory(config: dict, homekey_service=None, mqtt_config=None):
     driver = AccessoryDriver(port=config["port"], persist_file=config["persist"])
     accessory = Lock(
         driver,
         "NFC Lock",
         service=homekey_service,
+        mqtt_client=mqtt_config,
         lock_state_at_startup=int(config.get("default") != "unlocked")
     )
     driver.add_accessory(accessory=accessory)
@@ -79,7 +80,7 @@ def main():
 
     nfc_device = configure_nfc_device(config["nfc"])
     homekey_service = configure_homekey_service(config["homekey"], nfc_device, webhook_config=config["webhook"], door_status_config=config["door_status"])
-    hap_driver, _ = configure_hap_accessory(config["hap"], homekey_service)
+    hap_driver, _ = configure_hap_accessory(config["hap"], homekey_service, config["mqtt"])
 
     for s in (signal.SIGINT, signal.SIGTERM):
         signal.signal(
