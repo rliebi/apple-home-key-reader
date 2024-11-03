@@ -129,6 +129,7 @@ class Service:
         return door_status
 
     def trigger_webhook(self, data=None):
+        log.info(f"Triggering webhook with data: {data}")
         if data is None:
             data = {}
         if not self.webhook_config:

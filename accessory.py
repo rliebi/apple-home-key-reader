@@ -16,6 +16,7 @@ class Lock(Accessory):
 
     def __init__(self, *args, service: Service, lock_state_at_startup=1, mqtt_client: dict = None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.mqtt_client = None
         self.lock_target_state = None
         self.lock_version = None
         self.lock_control_point = None
@@ -41,14 +42,22 @@ class Lock(Accessory):
             mqtt_client.subscribe(self.mqtt_settings["topic"])
 
         def on_message(mqtt_client, userdata, msg):
-            log.info(f"MQTT message received: {msg.topic} {msg.payload}")
-            if self._lock_current_state == 0:
-                return
+            log.info(f"MQTT message received: {msg.topic} {msg.payload.decode()}")
+            log.info(f"Current lock state: {self._lock_current_state} {self.get_lock_current_state()}")
+            log.info(f"Target lock state: {self._lock_target_state} {self.get_lock_target_state()}")
             # Add logic to handle the message and trigger Shelly
-            if msg.payload.decode() == "trigger" and self.service:  # Replace with actual condition
+            if msg.payload.decode() == "trigger" and self.service and self._lock_current_state == 1:
+                mqtt_client.publish(self.mqtt_settings["topic"], "closed")
+                log.info('door locked')
+            if msg.payload.decode() == "trigger" and self.service and self._lock_current_state == 0:  # Replace with actual condition
                 self.service.trigger_webhook()
+                log.info('door opening by button')
+            if msg.payload.decode() == "lock":
+                self.set_lock_target_state(1, internal=True)
+            # if msg.payload.decode() == "unlock":
+            #     self.set_lock_target_state(0)
 
-        client = mqtt.Client()
+        self.mqtt_client = client = mqtt.Client()
         client.username_pw_set(self.mqtt_settings["username"], self.mqtt_settings["password"])
         client.on_connect = on_connect
         client.on_message = on_message
@@ -149,19 +158,23 @@ class Lock(Accessory):
 
     def get_lock_current_state(self):
         log.info(f"get_lock_current_state {self._lock_current_state}")
-        if self.service.is_door_closed() is not None:
-            return self.service.is_door_closed()
+        # if self.service.is_door_closed() is not None:
+        #     return self.service.is_door_closed()
         return self._lock_current_state
 
     def get_lock_target_state(self):
         log.info(f"get_lock_target_state {self._lock_target_state}")
         return self._lock_target_state
 
-    def set_lock_target_state(self, value):
+    def set_lock_target_state(self, value, internal=False):
         # value = 1 if (self.service.is_door_closed()) else 0
         log.info(f"set_lock_target_state {value}")
-        self._lock_target_state = self._lock_current_state = value
-        self.lock_current_state.set_value(self._lock_target_state, should_notify=True)
+        if not internal:
+            self.mqtt_client.publish(self.mqtt_settings["topic"], "locked" if value == 1 else "unlocked")
+        self._lock_target_state = value
+        self._lock_current_state = value
+        self.lock_target_state.set_value(self._lock_target_state, should_notify=True)
+        self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
         return self._lock_target_state
 
     def get_lock_version(self):
