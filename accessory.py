@@ -14,8 +14,14 @@ log = logging.getLogger()
 class Lock(Accessory):
     category = CATEGORY_DOOR_LOCK
 
-    def __init__(self, *args, service: Service, lock_state_at_startup=1, mqtt_client:dict=None, **kwargs):
+    def __init__(self, *args, service: Service, lock_state_at_startup=1, mqtt_client: dict = None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.lock_target_state = None
+        self.lock_version = None
+        self.lock_control_point = None
+        self.service_lock_management = None
+        self.lock_current_state = None
+        self.service_lock_mechanism = None
         self._last_client_public_keys = None
 
         self._lock_target_state = lock_state_at_startup
@@ -51,6 +57,7 @@ class Lock(Accessory):
 
         thread = threading.Thread(target=client.loop_forever, daemon=True)
         thread.start()
+
     def on_endpoint_authenticated(self, endpoint):
         # self._lock_target_state = 0
         log.info(
@@ -154,7 +161,7 @@ class Lock(Accessory):
         # value = 1 if (self.service.is_door_closed()) else 0
         log.info(f"set_lock_target_state {value}")
         self._lock_target_state = self._lock_current_state = value
-        self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
+        self.lock_current_state.set_value(self._lock_target_state, should_notify=True)
         return self._lock_target_state
 
     def get_lock_version(self):
