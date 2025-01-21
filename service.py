@@ -46,12 +46,14 @@ class Service:
         repository: Repository,
         express: bool = True,
         finish: str = "silver",
-        flow: str = "fast", 
+        flow: str = "fast",
         webhook_config=None,
         door_status_config=None,
+        throttle_polling = 0.1
     ) -> None:
         self.repository = repository
         self.clf = clf
+        self.throttle_polling = throttle_polling
         self.express = express in (True, "True", "true", "1")
         self.webhook_config = webhook_config
         self.door_status_config = door_status_config
@@ -202,7 +204,10 @@ class Service:
                 flag_2=self.express,
             ).pack(),
         )
+
         if remote_target is None:
+            # Throttle polling attempts to prevent overheating & RF performance degradation
+            time.sleep(max(0, self.throttle_polling - time.monotonic() + start))
             return
 
         target = activate(self.clf, remote_target)
@@ -261,7 +266,7 @@ class Service:
         if self.repository.get_reader_private_key() in (None, b""):
             raise Exception("Device is not configured via HAP. NFC inactive")
 
-        log.exception("Connecting to the NFC reader...")
+        log.info("Connecting to the NFC reader...")
 
         self.clf.device = None
         self.clf.open(self.clf.path)

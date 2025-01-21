@@ -7,9 +7,9 @@ import argparse
 from pyhap.accessory_driver import AccessoryDriver
 
 from accessory import Lock
-from util.bfclf import BroadcastFrameContactlessFrontend
 from repository import Repository
 from service import Service
+from util.bfclf import BroadcastFrameContactlessFrontend
 
 # By default, this file is located in the same folder as the project
 CONFIGURATION_FILE_PATH = "configuration.json"
@@ -46,7 +46,7 @@ def configure_hap_accessory(config: dict, homekey_service=None, mqtt_config=None
 
 def configure_nfc_device(config: dict):
     clf = BroadcastFrameContactlessFrontend(
-        path=f"tty:{config['port']}:{config['driver']}",
+        path=config.get("path", None) or f"tty:{config.get('port')}:{config.get('driver')}",
         broadcast_enabled=config.get("broadcast", True),
     )
     return clf
@@ -60,7 +60,9 @@ def configure_homekey_service(config: dict, nfc_device, repository=None, webhook
         finish=config.get("finish"),
         flow=config.get("flow"),
         webhook_config=webhook_config,
-        door_status_config=door_status_config
+        door_status_config=door_status_config,
+        # Poll no more than ~6 times a second by default
+        throttle_polling=float(config.get("throttle_polling") or 0.15),
     )
     return service
 
