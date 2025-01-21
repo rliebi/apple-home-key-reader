@@ -1,3 +1,4 @@
+import functools
 import logging
 
 import threading
@@ -27,6 +28,7 @@ class Lock(Accessory):
         self.add_nfc_access_service()
         self.mqtt_settings = mqtt_client
         self.start_mqtt_listener()
+        self.add_unpair_hook()
 
     def start_mqtt_listener(self):
         def on_connect(mqtt_client, userdata, flags, rc):
@@ -61,6 +63,16 @@ class Lock(Accessory):
         # self.lock_current_state.set_value(self._lock_current_state, should_notify=True)
         if self.service:
             self.service.trigger_webhook()
+
+    def add_unpair_hook(self):
+        unpair = self.driver.unpair
+
+        @functools.wraps(unpair)
+        def patched_unpair(client_uuid):
+            unpair(client_uuid)
+            self.on_unpair(client_uuid)
+
+        self.driver.unpair = patched_unpair
 
     def add_preload_service(self, service, chars=None, unique_id=None):
         """Create a service with the given name and add it to this acc."""
@@ -193,3 +205,7 @@ class Lock(Accessory):
     @property
     def clients(self):
         return self.driver.state.paired_clients
+
+    def on_unpair(self, client_id):
+        log.info(f"on_unpair {client_id}")
+        self._update_hap_pairings()
